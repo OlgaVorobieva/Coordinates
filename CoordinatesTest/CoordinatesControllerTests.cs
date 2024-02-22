@@ -104,7 +104,7 @@ namespace CoordinatesTest
         {
             yield return new TestCaseData(new Coordinate[] { new() { Latitude = 40.7128, Longitude = -74.0060 } });
             yield return new TestCaseData(Array.Empty<Coordinate>());
-            yield return new TestCaseData();
+            yield return new TestCaseData(null);
         }
     }
 }
