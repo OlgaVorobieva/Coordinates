@@ -1,6 +1,6 @@
 namespace CoordinatesTest;
 
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Text;
 using Coordinates.DataTypes;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -37,8 +37,8 @@ public class CoordinatesControllerTests
         {
             // Assert
             response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync();
-            var coordinates = JsonConvert.DeserializeObject<object[]>(content);
+            var content = await response.Content.ReadAsStreamAsync();
+            var coordinates = await JsonSerializer.DeserializeAsync<object[]>(content);
             Assert.That(coordinates, Is.Not.Null);
             Assert.That(coordinates, Has.Length.EqualTo(count));
         }
@@ -67,14 +67,15 @@ public class CoordinatesControllerTests
             new Coordinate { Latitude = 40.7128, Longitude = -74.0060 },
             new Coordinate { Latitude = 34.0522, Longitude = -118.2437 }
         };
-        var content = new StringContent(JsonConvert.SerializeObject(coordinates), Encoding.UTF8, "application/json");
+        var content = new StringContent(JsonSerializer.Serialize(coordinates), Encoding.UTF8, "application/json");
 
         // Act
         using (var response = await _client.PostAsync("/coordinates", content))
         {
             // Assert
             response.EnsureSuccessStatusCode();
-            var result = JsonConvert.DeserializeObject<DistanceResult>(await response.Content.ReadAsStringAsync());
+            var resultStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<DistanceResult>(resultStream);
             Assert.Multiple(() =>
             {
                 Assert.That(result.Meters, Is.GreaterThan(0));
@@ -88,14 +89,15 @@ public class CoordinatesControllerTests
     public async Task PostCoordinates_ReturnsZeroDistance(Coordinate[] coordinates)
     {
         // Arrange
-        var content = new StringContent(JsonConvert.SerializeObject(coordinates), Encoding.UTF8, "application/json");
+        var content = new StringContent(JsonSerializer.Serialize(coordinates), Encoding.UTF8, "application/json");
 
         // Act
         using (var response = await _client.PostAsync("/coordinates", content))
         {
             // Assert
             response.EnsureSuccessStatusCode();
-            var result = JsonConvert.DeserializeObject<DistanceResult>(await response.Content.ReadAsStringAsync());
+            var resultStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<DistanceResult>(resultStream);
             Assert.Multiple(() =>
             {
                 Assert.That(result.Meters, Is.EqualTo(0));
